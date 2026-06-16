@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Digital Clutter Audit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #F7F5F0;
+    --surface: #FFFFFF;
+    --surface-2: #F0EDE7;
+    --text-primary: #1A1916;
+    --text-secondary: #6B6860;
+    --text-hint: #9E9C97;
+    --border: rgba(26,25,22,0.1);
+    --border-strong: rgba(26,25,22,0.18);
+    --accent: #1D9E75;
+    --c-clean: #1D9E75;
+    --c-mild: #EF9F27;
+    --c-heavy: #D85A30;
+    --c-chaos: #E24B4A;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text-primary);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  /* ── Layout ── */
+  .page { max-width: 680px; margin: 0 auto; padding: 0 20px 80px; }
+
+  /* ── Hero ── */
+  .hero {
+    padding: 60px 0 48px;
+    border-bottom: 0.5px solid var(--border);
+    margin-bottom: 40px;
+  }
+  .hero-eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-hint);
+    margin-bottom: 16px;
+  }
+  .hero h1 {
+    font-size: clamp(32px, 6vw, 48px);
+    font-weight: 300;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+    margin-bottom: 16px;
+  }
+  .hero h1 em {
+    font-style: normal;
+    font-weight: 500;
+  }
+  .hero p {
+    font-size: 15px;
+    color: var(--text-secondary);
+    max-width: 480px;
+    line-height: 1.75;
+  }
+
+  /* ── Overall meter ── */
+  .meter-block {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: 16px;
+    padding: 24px 28px;
+    margin-bottom: 40px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  .meter-left { flex: 1; }
+  .meter-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-hint);
+    margin-bottom: 10px;
+  }
+  .meter-track {
+    height: 8px;
+    background: var(--surface-2);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .meter-fill {
+    height: 100%;
+    border-radius: 99px;
+    transition: width 0.4s ease, background-color 0.4s ease;
+    width: 0%;
+    background: var(--c-clean);
+  }
+  .meter-score {
+    font-family: 'DM Mono', monospace;
+    font-size: 36px;
+    font-weight: 500;
+    color: var(--text-primary);
+    transition: color 0.4s ease;
+    min-width: 70px;
+    text-align: right;
+  }
+
+  /* ── Section label ── */
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-hint);
+    margin-bottom: 16px;
+  }
+
+  /* ── Category cards ── */
+  .cats { display: flex; flex-direction: column; gap: 8px; margin-bottom: 40px; }
+
+  .cat {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    transition: border-color 0.35s ease;
+  }
+  .cat-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 4px;
+  }
+  .cat-icon {
+    font-size: 18px;
+    width: 24px;
+    text-align: center;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  .cat-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    flex: 1;
+  }
+  .cat-pct {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-hint);
+    min-width: 38px;
+    text-align: right;
+    transition: color 0.35s;
+  }
+  .cat-example {
+    font-size: 12px;
+    color: var(--text-hint);
+    margin-left: 32px;
+    margin-bottom: 14px;
+    font-style: italic;
+  }
+  .slider-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: 32px;
+  }
+  .slider-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    color: var(--text-hint);
+    white-space: nowrap;
+  }
+
+  /* Range slider */
+  input[type=range] {
+    -webkit-appearance: none;
+    appearance: none;
+    flex: 1;
+    height: 4px;
+    border-radius: 99px;
+    background: var(--surface-2);
+    outline: none;
+    cursor: pointer;
+    transition: background 0.35s;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 2px solid var(--border-strong);
+    cursor: pointer;
+    transition: border-color 0.35s, transform 0.15s;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  }
+  input[type=range]:hover::-webkit-slider-thumb,
+  input[type=range]:focus::-webkit-slider-thumb {
+    transform: scale(1.15);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 2px solid var(--border-strong);
+    cursor: pointer;
+  }
+
+  /* ── Verdict ── */
+  .verdict {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: 16px;
+    padding: 24px 28px;
+    margin-bottom: 32px;
+    display: none;
+  }
+  .verdict.visible { display: block; }
+  .verdict-eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-hint);
+    margin-bottom: 8px;
+  }
+  .verdict-heading {
+    font-size: 18px;
+    font-weight: 500;
+    margin-bottom: 10px;
+  }
+  .verdict-body {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.75;
+  }
+  .verdict-tops {
+    margin-top: 14px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .top-tag {
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 99px;
+    background: var(--surface-2);
+    color: var(--text-secondary);
+    border: 0.5px solid var(--border);
+  }
+
+  /* ── Footer note ── */
+  .footer-note {
+    font-size: 12px;
+    color: var(--text-hint);
+    text-align: center;
+    padding-top: 24px;
+    border-top: 0.5px solid var(--border);
+  }
+
+  @media (max-width: 480px) {
+    .meter-block { flex-direction: column; align-items: flex-start; gap: 12px; }
+    .meter-score { font-size: 28px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="hero">
+    <p class="hero-eyebrow">C1+ English lesson activity</p>
+    <h1>How <em>cluttered</em> is your digital life?</h1>
+    <p>Move each slider to reflect how hoarded that corner of your digital world feels — 0 means clean and intentional, 100 means total chaos.</p>
+  </header>
+
+  <div class="meter-block">
+    <div class="meter-left">
+      <p class="meter-label">Overall clutter level</p>
+      <div class="meter-track">
+        <div class="meter-fill" id="overall-fill"></div>
+      </div>
+    </div>
+    <div class="meter-score" id="overall-score">0%</div>
+  </div>
+
+  <p class="section-label">Rate each category</p>
+  <div class="cats" id="cats"></div>
+
+  <div class="verdict" id="verdict">
+    <p class="verdict-eyebrow">Your reading</p>
+    <p class="verdict-heading" id="verdict-heading"></p>
+    <p class="verdict-body" id="verdict-body"></p>
+    <div class="verdict-tops" id="verdict-tops"></div>
+  </div>
+
+  <p class="footer-note">This is a self-reflection tool, not a diagnosis. There are no wrong answers.</p>
+
+</div>
+
+<script>
+const cats = [
+  { icon: "📸", name: "Screenshots & camera roll",   example: "blurry photos, near-identical selfies, random screenshots you meant to delete" },
+  { icon: "📧", name: "Emails & newsletters",         example: "newsletters you've never opened, promotional tabs, threads from 2019" },
+  { icon: "📌", name: "Pinterest & saved images",     example: "boards you haven't opened in months, aesthetic inspiration you've never acted on" },
+  { icon: "🍳", name: "Saved recipes",                example: "recipes bookmarked but never cooked, duplicate ideas saved across five apps" },
+  { icon: "📍", name: "Places to visit",              example: "Google Maps saves, 'someday' travel lists, cafés you'll probably never go back to" },
+  { icon: "🔖", name: "Articles & browser bookmarks", example: "open tabs 'for later', read-it-later lists, bookmarks from a different era of your life" },
+  { icon: "🛒", name: "Shopping wishlists",           example: "abandoned carts, saved items you've forgotten about, alerts for things you don't need" },
+  { icon: "▶️", name: "YouTube & video saves",        example: "Watch Later graveyard, saved Reels, downloaded videos still unopened" },
+  { icon: "💬", name: "Chats & voice notes",          example: "voice notes you haven't listened to, unread messages, group chats you've muted but kept" },
+  { icon: "📄", name: "Documents & files",            example: "Downloads folder chaos, mystery PDFs, attachments saved 'just in case'" },
+  { icon: "🎓", name: "Courses & learning content",   example: "half-finished Udemy courses, saved tutorials, ebooks you'll get to someday" },
+  { icon: "🎧", name: "Podcasts & music",             example: "unplayed episodes, 'add to queue' lists, playlists from three interests ago" },
+];
+
+function getColor(v) {
+  if (v < 30) return '#1D9E75';
+  if (v < 60) return '#EF9F27';
+  if (v < 80) return '#D85A30';
+  return '#E24B4A';
+}
+
+function updateOverall() {
+  const avg = Math.round(cats.reduce((s, c) => s + (c.val || 0), 0) / cats.length);
+  const scoreEl = document.getElementById('overall-score');
+  const fillEl = document.getElementById('overall-fill');
+  scoreEl.textContent = avg + '%';
+  scoreEl.style.color = avg > 0 ? getColor(avg) : 'var(--text-primary)';
+  fillEl.style.width = avg + '%';
+  fillEl.style.backgroundColor = getColor(avg);
+  updateVerdict(avg);
+}
+
+function updateVerdict(avg) {
+  const v = document.getElementById('verdict');
+  const vh = document.getElementById('verdict-heading');
+  const vb = document.getElementById('verdict-body');
+  const vt = document.getElementById('verdict-tops');
+
+  if (avg === 0) { v.classList.remove('visible'); return; }
+  v.classList.add('visible');
+
+  if (avg < 25) {
+    vh.textContent = 'Pretty tidy overall';
+    vb.textContent = 'Your digital spaces seem reasonably organized — though even small accumulations can quietly drain attention. Which category surprised you most?';
+  } else if (avg < 50) {
+    vh.textContent = 'Moderate clutter building up';
+    vb.textContent = 'You\'re in good company. Most people find two or three categories that snowball quietly over time. The categories that feel most draining are usually the best place to start.';
+  } else if (avg < 75) {
+    vh.textContent = 'Significant digital hoarding';
+    vb.textContent = 'Your digital life is carrying a lot of weight. The interesting question isn\'t "why did I save all this" — it\'s "what was I afraid of losing or missing out on?"';
+  } else {
+    vh.textContent = 'Total digital overload';
+    vb.textContent = 'You\'re deep in it — and recognizing that is genuinely useful. Digital hoarding often maps onto a fear of forgetting, or a belief that future-you will need this. What do you think is driving it?';
+  }
+
+  const tops = cats.filter(c => c.val > 0).sort((a, b) => b.val - a.val).slice(0, 4);
+  vt.innerHTML = tops.map(c => `<span class="top-tag">${c.name} — ${c.val}%</span>`).join('');
+}
+
+const container = document.getElementById('cats');
+cats.forEach((cat, i) => {
+  cat.val = 0;
+  const el = document.createElement('div');
+  el.className = 'cat';
+  el.innerHTML = `
+    <div class="cat-header">
+      <span class="cat-icon" id="icon-${i}" aria-hidden="true">${cat.icon}</span>
+      <span class="cat-name">${cat.name}</span>
+      <span class="cat-pct" id="pct-${i}">0%</span>
+    </div>
+    <p class="cat-example">${cat.example}</p>
+    <div class="slider-wrap">
+      <span class="slider-tag">Clean</span>
+      <input type="range" min="0" max="100" step="1" value="0" id="sl-${i}" aria-label="${cat.name} clutter level" />
+      <span class="slider-tag">Chaos</span>
+    </div>
+  `;
+  container.appendChild(el);
+
+  const sl = el.querySelector(`#sl-${i}`);
+  const pct = el.querySelector(`#pct-${i}`);
+
+  sl.addEventListener('input', () => {
+    const v = parseInt(sl.value);
+    cat.val = v;
+    const color = getColor(v);
+    pct.textContent = v + '%';
+    pct.style.color = v > 0 ? color : 'var(--text-hint)';
+    el.style.borderColor = v > 0 ? color + '55' : '';
+    sl.style.background = v > 0
+      ? `linear-gradient(to right, ${color} ${v}%, var(--surface-2) ${v}%)`
+      : 'var(--surface-2)';
+    updateOverall();
+  });
+});
+</script>
+</body>
+</html>
